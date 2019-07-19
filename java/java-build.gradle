@@ -10,7 +10,7 @@ repositories {
 def buildTimestamp = new Date().format("yyyyMMdd-hhmmss");
 
 def buildProps = new Properties()
-file("https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/java-build.properties").withInputStream { buildProps.load(it) }
+new URL("https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/java-build.properties").withInputStream { buildProps.load(it) }
 project.ext.gradleVersion = buildProps.getProperty("version.gradle")
 project.ext.javaVersion = buildProps.getProperty("version.java")
 project.ext.springBootVersion = buildProps.getProperty("version.springboot")
