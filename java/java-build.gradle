@@ -5,6 +5,7 @@ apply plugin: "maven"
 repositories {
 	jcenter()
 	mavenLocal()
+	mavenCentral()
 }
 
 def buildTimestamp = new Date().format("yyyyMMdd-hhmmss");
