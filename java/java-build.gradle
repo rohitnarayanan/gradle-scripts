@@ -1,0 +1,60 @@
+apply plugin: "io.spring.dependency-management"
+apply plugin: "java-library"
+apply plugin: "maven"
+
+repositories {
+	jcenter()
+	mavenLocal()
+}
+
+def buildTimestamp = new Date().format("yyyyMMdd-hhmmss");
+
+def buildProps = new Properties()
+file("https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/java-build.properties").withInputStream { buildProps.load(it) }
+project.ext.gradleVersion = buildProps.getProperty("version.gradle")
+project.ext.javaVersion = buildProps.getProperty("version.java")
+project.ext.springBootVersion = buildProps.getProperty("version.springboot")
+
+
+/*
+ * Build Settings
+ */
+compileJava {
+	sourceCompatibility = javaVersion
+	targetCompatibility = javaVersion
+	
+    options.compilerArgs += ["-Xlint:unchecked"]
+}
+
+
+test {
+	useJUnitPlatform()
+}
+
+
+project.plugins.withId("java-library") {
+	bootJar {
+	    enabled = false
+	}
+	
+    jar {
+		from (sourceSets.main.allSource) {
+			include '**/*.java'
+		}
+		
+		manifest {
+			attributes (
+				"build-version": version,
+				"build-timestamp": buildTimestamp,
+				"gradle-version": gradleVersion,
+				"java-version": javaVersion,
+				"spring-boot-version": springBootVersion
+			)
+		}
+	}
+	
+	build.finalizedBy install
+}
+
+
+apply from: "https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/eclipse-config.gradle"
