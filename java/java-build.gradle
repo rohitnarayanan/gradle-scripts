@@ -39,6 +39,8 @@ project.plugins.withId("java-library") {
 	}
 	
     jar {
+    	enabled = true
+    	
 		from (sourceSets.main.allSource) {
 			include '**/*.java'
 		}
