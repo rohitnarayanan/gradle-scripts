@@ -1,5 +1,26 @@
-apply plugin: "io.spring.dependency-management"
-apply plugin: "java-library"
+buildscript {
+	repositories {
+		jcenter()
+		mavenLocal()
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+	}
+
+	dependencies {
+		classpath "org.springframework.boot:spring-boot-gradle-plugin:2.1.7.RELEASE"
+	}
+}
+
+// core plugins can be applied via shortname/id
+apply plugin: "jacoco"
+
+/*
+ * Other plugins need to be applied via the plugin class as this script is included in other scripts
+ */
+apply plugin: org.springframework.boot.gradle.plugin.SpringBootPlugin
+apply plugin: io.spring.gradle.dependencymanagement.DependencyManagementPlugin
+
 apply plugin: "maven"
 
 repositories {
@@ -24,7 +45,7 @@ compileJava {
 	sourceCompatibility = javaVersion
 	targetCompatibility = javaVersion
 	
-    options.compilerArgs += ["-Xlint:unchecked"]
+	options.compilerArgs += ["-Xlint:unchecked"]
 }
 
 
@@ -35,12 +56,12 @@ test {
 
 project.plugins.withId("java-library") {
 	bootJar {
-	    enabled = false
+		enabled = false
 	}
 	
-    jar {
-    	enabled = true
-    	
+	jar {
+		enabled = true
+		
 		from (sourceSets.main.allSource) {
 			include '**/*.java'
 		}
@@ -56,6 +77,10 @@ project.plugins.withId("java-library") {
 		}
 	}
 	
+	// enable jacoco reports
+	test.finalizedBy jacocoTestReport
+	
+	// publish the artifact to maven
 	build.finalizedBy install
 }
 
