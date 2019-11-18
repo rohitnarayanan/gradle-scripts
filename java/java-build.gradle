@@ -21,7 +21,7 @@ apply plugin: "jacoco"
 apply plugin: org.springframework.boot.gradle.plugin.SpringBootPlugin
 apply plugin: io.spring.gradle.dependencymanagement.DependencyManagementPlugin
 
-apply plugin: "maven"
+apply plugin: "maven-publish"
 
 repositories {
 	jcenter()
@@ -68,7 +68,7 @@ project.plugins.withId("java-library") {
 		
 		manifest {
 			attributes (
-				"build-version": version,
+				"build-version": archiveVersion,
 				"build-timestamp": buildTimestamp,
 				"gradle-version": gradleVersion,
 				"java-version": javaVersion,
