@@ -12,16 +12,12 @@ buildscript {
 	}
 }
 
-// core plugins can be applied via shortname/id
-apply plugin: "jacoco"
-
 /*
  * Other plugins need to be applied via the plugin class as this script is included in other scripts
  */
 apply plugin: org.springframework.boot.gradle.plugin.SpringBootPlugin
 apply plugin: io.spring.gradle.dependencymanagement.DependencyManagementPlugin
 
-apply plugin: "maven-publish"
 
 repositories {
 	jcenter()
@@ -29,17 +25,14 @@ repositories {
 	mavenCentral()
 }
 
-def buildTimestamp = new Date().format("yyyyMMdd-hhmmss");
-
 def buildProps = new Properties()
 new URL("https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/java-build.properties").withInputStream { buildProps.load(it) }
-project.ext.gradleVersion = buildProps.getProperty("version.gradle")
 project.ext.javaVersion = buildProps.getProperty("version.java")
 project.ext.springBootVersion = buildProps.getProperty("version.springboot")
 
 
 /*
- * Build Settings
+ * Compile config
  */
 compileJava {
 	sourceCompatibility = javaVersion
@@ -49,11 +42,20 @@ compileJava {
 }
 
 
+/*
+ * Test config
+ */
 test {
 	useJUnitPlatform()
 }
 
+// enable jacoco reports
+apply plugin: "jacoco"
+test.finalizedBy jacocoTestReport
 
+/*
+ * java-library config
+ */
 project.plugins.withId("java-library") {
 	bootJar {
 		enabled = false
@@ -68,20 +70,30 @@ project.plugins.withId("java-library") {
 		
 		manifest {
 			attributes (
-				"build-version": archiveVersion,
-				"build-timestamp": buildTimestamp,
-				"gradle-version": gradleVersion,
-				"java-version": javaVersion,
-				"spring-boot-version": springBootVersion
+				"Build-Version": project.ext.archiveVersion,
+				"Build-Timestamp": new Date().format("yyyyMMdd-hhmmss.SSSZ"),
+				"Build-Tool": "Gradle ${gradle.gradleVersion}",
+				"Build-JDK" : "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+				"Build-Platform" : "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}",
+				"Java-Source-Version": javaVersion,
+				"Spring-Boot-Version": springBootVersion
 			)
 		}
 	}
 	
-	// enable jacoco reports
-	test.finalizedBy jacocoTestReport
-	
 	// publish the artifact to maven
-	build.finalizedBy install
+	apply plugin: "maven-publish"
+	publishing {
+		publications {
+			mavenJava(MavenPublication) {
+				groupId group
+				artifactId project.name
+				version archiveVersion
+				from components.java
+			}
+		}
+	}
+	build.finalizedBy publishToMavenLocal
 }
 
 
