@@ -1,0 +1,106 @@
+buildscript {
+	repositories {
+		jcenter()
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+	}
+
+	dependencies {
+		classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4"
+	}
+}
+
+repositories {
+	jcenter()
+	mavenLocal()
+	mavenCentral()
+}
+
+def publishProps = new Properties()
+new URL("https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/jcenter-publish.properties").withInputStream { publishProps.load(it) }
+
+
+/*
+ * Publish config
+ */
+apply plugin: "maven-publish"
+apply plugin: com.jfrog.bintray.gradle.BintrayPlugin
+
+def pomConfig = {
+	licenses {
+		license {
+			name "The Apache Software License, Version 2.0"
+			url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+			distribution "repo"
+		}
+	}
+	developers {
+		developer {
+			id publishProps.getProperty("github.user")
+			name publishProps.getProperty("github.name")
+			email publishProps.getProperty("github.email")
+		}
+	}
+
+	scm {
+		url project.repoURL
+	}
+}
+
+// maven config
+publishing {
+	publications {
+		mavenPublication(MavenPublication) {
+			from components.java
+			artifact sourcesJar {
+				classifier "sources"
+			}
+			artifact javadocJar {
+				classifier "javadoc"
+			}
+			
+			groupId project.group
+			artifactId project.name
+			version project.archiveVersion
+			
+			pom.withXml {
+				def root = asNode()
+				root.appendNode("name", project.name)
+				root.appendNode("description", project.description)
+				root.appendNode("url", project.repoURL)
+				root.children().last() + pomConfig
+			}
+		}
+	}
+}
+
+
+
+// publishing maven artifact to jcenter
+bintray {
+	user = publishProps.getProperty("bintray.user")
+	key = publishProps.getProperty("bintray.key")
+
+	publish = true     
+    override = false
+	if (project.ext.jcenterPublish == false) {
+		dryRun = true
+	}	
+	publications = ["mavenPublication"]
+
+	pkg {
+		userOrg = publishProps.getProperty("bintray.org")
+		repo = publishProps.getProperty("bintray.repo")
+		name = project.name
+		licenses = ['Apache-2.0']
+		vcsUrl = project.repoURL
+		version {
+			name = project.archiveVersion
+			desc = project.archiveVersion
+			released  = new Date()
+			vcsTag = project.archiveVersion
+		}
+	}
+}
+build.finalizedBy bintrayUpload

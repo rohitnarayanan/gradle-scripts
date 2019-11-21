@@ -1,7 +1,6 @@
 buildscript {
 	repositories {
 		jcenter()
-		mavenLocal()
 		maven {
 			url "https://plugins.gradle.org/m2/"
 		}
@@ -9,6 +8,7 @@ buildscript {
 
 	dependencies {
 		classpath "org.springframework.boot:spring-boot-gradle-plugin:2.2.1.RELEASE"
+		classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4"
 	}
 }
 
@@ -28,11 +28,10 @@ repositories {
 def buildProps = new Properties()
 new URL("https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/java-build.properties").withInputStream { buildProps.load(it) }
 project.ext.javaVersion = buildProps.getProperty("version.java")
-project.ext.springBootVersion = buildProps.getProperty("version.springboot")
 
 
 /*
- * Compile config
+ * Java config
  */
 compileJava {
 	sourceCompatibility = javaVersion
@@ -53,6 +52,42 @@ test {
 apply plugin: "jacoco"
 test.finalizedBy jacocoTestReport
 
+
+/*
+ * Build config
+ */
+jar {
+	manifest {
+		attributes (
+			"Build-Version": project.archiveVersion,
+			"Build-Timestamp": new Date().format("yyyyMMdd-hhmmss.SSSZ"),
+			"Build-Tool": "Gradle ${gradle.gradleVersion}",
+			"Build-JDK" : "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+			"Build-Platform" : "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}",
+			"Java-Source-Version": javaVersion,
+			"Spring-Boot-Version": buildProps.getProperty("version.springboot")
+		)
+	}
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = "sources"
+	from sourceSets.main.allSource
+}
+
+javadoc.failOnError = false
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	classifier = "javadoc"
+	from javadoc.destinationDir
+	javadoc.options.addBooleanOption("Xdoclint:none", true)
+}
+
+artifacts {
+	archives sourcesJar
+	archives javadocJar
+}
+
+
 /*
  * java-library config
  */
@@ -63,38 +98,11 @@ project.plugins.withId("java-library") {
 	
 	jar {
 		enabled = true
-		
-		from (sourceSets.main.allSource) {
-			include '**/*.java'
-		}
-		
-		manifest {
-			attributes (
-				"Build-Version": project.ext.archiveVersion,
-				"Build-Timestamp": new Date().format("yyyyMMdd-hhmmss.SSSZ"),
-				"Build-Tool": "Gradle ${gradle.gradleVersion}",
-				"Build-JDK" : "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
-				"Build-Platform" : "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}",
-				"Java-Source-Version": javaVersion,
-				"Spring-Boot-Version": springBootVersion
-			)
-		}
 	}
-	
-	// publish the artifact to maven
-	apply plugin: "maven-publish"
-	publishing {
-		publications {
-			mavenJava(MavenPublication) {
-				groupId group
-				artifactId project.name
-				version archiveVersion
-				from components.java
-			}
-		}
-	}
-	build.finalizedBy publishToMavenLocal
 }
 
 
+/*
+ * Eclipse config
+ */
 apply from: "https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/eclipse-config.gradle"
