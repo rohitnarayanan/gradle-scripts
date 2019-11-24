@@ -92,8 +92,8 @@ bintray {
 	user = publishProps.getProperty("bintray.user")
 	key = publishProps.getProperty("bintray.key")
 
-	dryRun = true
-	publish = false
+	dryRun = false
+	publish = true
 	override = false
 	publications = ["mavenPublication"]
 
