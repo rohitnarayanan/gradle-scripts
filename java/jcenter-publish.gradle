@@ -18,8 +18,9 @@ repositories {
 }
 
 def publishProps = new Properties()
-new URL("https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/jcenter-publish.properties").withInputStream { publishProps.load(it) }
-
+new URL(project.ext.scriptURL + "java/jcenter-publish.properties").withInputStream {
+	 stream -> publishProps.load(stream)
+}
 
 /*
  * Publish config
@@ -64,6 +65,15 @@ publishing {
 			artifactId project.name
 			version project.archiveVersion
 			
+			versionMapping {
+				usage('java-api') {
+					fromResolutionOf('runtimeClasspath')
+				}
+				usage('java-runtime') {
+					fromResolutionResult()
+				}
+			}
+			
 			pom.withXml {
 				def root = asNode()
 				root.appendNode("name", project.name)
@@ -82,11 +92,9 @@ bintray {
 	user = publishProps.getProperty("bintray.user")
 	key = publishProps.getProperty("bintray.key")
 
-	publish = true     
-    override = false
-	if (project.ext.jcenterPublish == false) {
-		dryRun = true
-	}	
+	dryRun = true
+	publish = false
+	override = false
 	publications = ["mavenPublication"]
 
 	pkg {
@@ -98,9 +106,8 @@ bintray {
 		version {
 			name = project.archiveVersion
 			desc = project.archiveVersion
-			released  = new Date()
+			released = new Date()
 			vcsTag = project.archiveVersion
 		}
 	}
 }
-build.finalizedBy bintrayUpload

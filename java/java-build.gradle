@@ -8,7 +8,6 @@ buildscript {
 
 	dependencies {
 		classpath "org.springframework.boot:spring-boot-gradle-plugin:2.2.1.RELEASE"
-		classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4"
 	}
 }
 
@@ -25,10 +24,21 @@ repositories {
 	mavenCentral()
 }
 
-def buildProps = new Properties()
-new URL("https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/java-build.properties").withInputStream { buildProps.load(it) }
-project.ext.javaVersion = buildProps.getProperty("version.java")
+println "useLocalRepo="+project.ext.useLocalRepo
+if(project.ext.useLocalRepo == "true") {
+	project.ext.scriptURL = "http://localproxy.localhost.com:4080/devops/gradle-scripts/"
+}
+else {
+	project.ext.scriptURL = "https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/"
+}
+println "scriptURL="+project.ext.scriptURL
 
+
+def buildProps = new Properties()
+new URL(project.ext.scriptURL + "java/java-build.properties").withInputStream {
+	 stream -> buildProps.load(stream)
+}
+project.ext.javaVersion = buildProps.getProperty("version.java")
 
 /*
  * Java config
@@ -103,6 +113,12 @@ project.plugins.withId("java-library") {
 
 
 /*
+ * JCenter config
+ */
+apply from: project.ext.scriptURL + "java/jcenter-publish.gradle"
+
+
+/*
  * Eclipse config
  */
-apply from: "https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/eclipse-config.gradle"
+apply from: project.ext.scriptURL + "java/eclipse-config.gradle"
