@@ -58,7 +58,14 @@ apply plugin: "jacoco"
 test {
 	useJUnitPlatform()
 }
-// Executing jacocoTestReport after test as Azure pipeline task fails.
+// additional jacocoTestReport configuration as standalone Azure pipeline task fails.
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        csv.enabled false
+        html.enabled false
+    }
+}
 test.finalizedBy jacocoTestReport
 
 /*
