@@ -58,6 +58,8 @@ apply plugin: "jacoco"
 test {
 	useJUnitPlatform()
 }
+// Executing jacocoTestReport after test as Azure pipeline task fails.
+test.finalizedBy jacocoTestReport
 
 /*
  * Build config
