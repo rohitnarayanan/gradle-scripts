@@ -54,14 +54,10 @@ compileJava {
 /*
  * Test config
  */
+apply plugin: "jacoco"
 test {
 	useJUnitPlatform()
 }
-
-// enable jacoco reports
-apply plugin: "jacoco"
-test.finalizedBy jacocoTestReport
-
 
 /*
  * Build config
